@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta
+      name="description"
+      content="Client Contact CRM - manage client names, addresses, calls, and business relationships."
+    />
+    <title>Client Contact CRM</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">C</div>
+          <div>
+            <p class="eyebrow">Relationship CRM</p>
+            <h1>Client Contact CRM</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="primary-btn" data-open-modal="clientModal">+ New Client</button>
+          <div class="action-menu-wrap">
+            <button id="actionBtn" class="secondary-btn" type="button">Action</button>
+            <div id="actionMenu" class="action-menu hidden">
+              <button type="button" class="menu-item" id="backupBtn">Backup CRM</button>
+              <label class="menu-item file-item">
+                Restore backup
+                <input id="restoreInput" type="file" accept="application/json" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="panel search-panel">
+            <label class="search-box sidebar-search" aria-label="Search clients and calls">
+              <span>⌕</span>
+              <input id="globalSearch" type="search" placeholder="Search client name, address, phone, relation" />
+            </label>
+
+            <div class="panel-subhead">
+              <h2>Clients</h2>
+              <span id="clientsSummary" class="section-pill"></span>
+            </div>
+
+            <div id="clientsList" class="client-list"></div>
+          </div>
+
+        </aside>
+
+        <main class="main-panel">
+          <section class="tabs" aria-label="Client views">
+            <button class="tab-btn active" data-view="clientsView">Clients</button>
+            <button class="tab-btn" data-view="callsView">Calls</button>
+          </section>
+
+          <section id="clientsView" class="view active">
+            <div id="clientDetailsContainer" class="detail-container hidden"></div>
+          </section>
+
+          <section id="callsView" class="view">
+            <div class="section-head">
+              <h2>Call log</h2>
+              <span class="section-pill">Outgoing and incoming</span>
+            </div>
+            <div id="callsList" class="table-list"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div id="clientModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Add client</h3>
+          <button class="close-btn" data-close-modal="clientModal">×</button>
+        </div>
+        <form id="clientForm" class="stack-form">
+          <div class="field-row">
+            <label>
+              Full name
+              <input name="name" type="text" required />
+            </label>
+            <label>
+              Company / business
+              <input name="company" type="text" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label>
+              Phone
+              <input name="phone" type="tel" />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" />
+            </label>
+          </div>
+          <label>
+            Address
+            <input name="address" type="text" placeholder="Street, city, state, ZIP" />
+          </label>
+          <div class="field-row">
+            <label>
+              Relationship type
+              <select name="relationType">
+                <option value="Customer">Customer</option>
+                <option value="Partner">Partner</option>
+                <option value="Supplier">Supplier</option>
+                <option value="Referral">Referral</option>
+                <option value="Family">Family</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="Active">Active</option>
+                <option value="Warm">Warm</option>
+                <option value="Cold">Cold</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Notes
+            <textarea name="notes" rows="4" placeholder="Preferred contact time, relationship details, important reminders..."></textarea>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" data-close-modal="clientModal">Cancel</button>
+            <button type="submit" class="primary-btn">Save client</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="callModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Add call log</h3>
+          <button class="close-btn" data-close-modal="callModal">×</button>
+        </div>
+        <form id="callForm" class="stack-form">
+          <div class="field-row">
+            <label>
+              Client
+              <select name="clientId" id="callClientSelect"></select>
+            </label>
+            <label>
+              Call type
+              <select name="callType">
+                <option value="Outgoing">Outgoing</option>
+                <option value="Incoming">Incoming</option>
+                <option value="Follow-up">Follow-up</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>
+              Call date
+              <input name="callDate" type="date" required />
+            </label>
+            <label>
+              Next follow-up
+              <input name="nextFollowUp" type="date" />
+            </label>
+          </div>
+          <label>
+            Outcome
+            <input name="outcome" type="text" placeholder="Interested, not ready, scheduled meeting..." required />
+          </label>
+          <label>
+            Notes
+            <textarea name="notes" rows="3" placeholder="Summary of conversation, promises, objections, next step..."></textarea>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" data-close-modal="callModal">Cancel</button>
+            <button type="submit" class="primary-btn">Save call</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="relationModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Relationship note</h3>
+          <button class="close-btn" data-close-modal="relationModal">×</button>
+        </div>
+        <form id="relationForm" class="stack-form">
+          <div class="field-row">
+            <label>
+              Client
+              <select name="clientId" id="relationClientSelect"></select>
+            </label>
+            <label>
+              Relationship type
+              <select name="relationType">
+                <option value="Customer">Customer</option>
+                <option value="Partner">Partner</option>
+                <option value="Supplier">Supplier</option>
+                <option value="Referral">Referral</option>
+                <option value="Family">Family</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Status
+            <select name="status">
+              <option value="Strong">Strong</option>
+              <option value="Developing">Developing</option>
+              <option value="Needs attention">Needs attention</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </label>
+          <label>
+            Notes
+            <textarea name="notes" rows="4" placeholder="How the relationship is developing and what should be managed..."></textarea>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" data-close-modal="relationModal">Cancel</button>
+            <button type="submit" class="primary-btn">Save relation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
