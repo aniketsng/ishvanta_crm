@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'client-contact-crm-v1';
+const THEME_STORAGE_KEY = 'client-contact-crm-theme';
 
 const defaultState = {
   clients: [
@@ -89,6 +90,7 @@ const elements = {
   globalSearch: document.querySelector('#globalSearch'),
   actionBtn: document.querySelector('#actionBtn'),
   actionMenu: document.querySelector('#actionMenu'),
+  themeToggleBtn: document.querySelector('#themeToggleBtn'),
   backupBtn: document.querySelector('#backupBtn'),
   restoreInput: document.querySelector('#restoreInput')
 };
@@ -146,6 +148,16 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function applyTheme(themeName) {
+  const theme = themeName === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+  if (elements.themeToggleBtn) {
+    elements.themeToggleBtn.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  }
 }
 
 function getClientName(clientId) {
@@ -654,6 +666,9 @@ function setupEventHandlers() {
   setupTabs();
   setupModalControls();
 
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+  applyTheme(savedTheme);
+
   if (elements.actionBtn && elements.actionMenu) {
     elements.actionBtn.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -664,6 +679,14 @@ function setupEventHandlers() {
       if (!event.target.closest('.action-menu-wrap')) {
         elements.actionMenu.classList.add('hidden');
       }
+    });
+  }
+
+  if (elements.themeToggleBtn) {
+    elements.themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      if (elements.actionMenu) elements.actionMenu.classList.add('hidden');
     });
   }
 

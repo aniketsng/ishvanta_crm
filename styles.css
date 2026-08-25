@@ -1,8 +1,15 @@
 :root {
   --bg: #f4f7fb;
   --bg-strong: #eaf2ff;
+  --bg-gradient-1: #f4f7fb;
+  --bg-gradient-2: #eef9f7;
   --panel: #ffffff;
   --panel-alt: #f3f8ff;
+  --panel-soft: rgba(255, 255, 255, 0.86);
+  --panel-glass: rgba(255, 255, 255, 0.72);
+  --panel-menu: rgba(255, 255, 255, 0.96);
+  --secondary-btn-bg: #edf4ff;
+  --secondary-btn-alt: #dfeeff;
   --primary: #0b5bd3;
   --primary-dark: #083f9a;
   --secondary: #17a89c;
@@ -16,6 +23,31 @@
   --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
+:root[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg-strong: #111827;
+  --bg-gradient-1: #0b1220;
+  --bg-gradient-2: #111827;
+  --panel: #111c2e;
+  --panel-alt: #15233b;
+  --panel-soft: rgba(17, 28, 46, 0.86);
+  --panel-glass: rgba(15, 23, 42, 0.78);
+  --panel-menu: rgba(15, 23, 42, 0.96);
+  --secondary-btn-bg: #16263f;
+  --secondary-btn-alt: #1c2d49;
+  --primary: #7db4ff;
+  --primary-dark: #4d8ef7;
+  --secondary: #36d0b6;
+  --accent: #f6c45c;
+  --text: #edf4ff;
+  --muted: #9bb0d1;
+  --border: rgba(148, 163, 184, 0.26);
+  --success: #22c55e;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --shadow: 0 20px 40px rgba(2, 6, 23, 0.48);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -24,7 +56,7 @@ html, body {
   margin: 0;
   min-height: 100%;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, var(--bg) 0%, #eef9f7 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
   color: var(--text);
 }
 
@@ -69,8 +101,8 @@ button {
   justify-content: space-between;
   gap: 20px;
   padding: 18px 22px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(223, 233, 247, 0.9);
+  background: var(--panel-glass);
+  border: 1px solid var(--border);
   border-radius: 22px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
@@ -135,7 +167,7 @@ h1 {
   display: flex;
   flex-direction: column;
   min-width: 180px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--panel-menu);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -198,7 +230,7 @@ h1 {
   width: 100%;
   min-width: 0;
   margin-bottom: 16px;
-  background: #f4f8ff;
+  background: var(--panel-alt);
 }
 
 .panel-subhead {
@@ -236,7 +268,7 @@ h1 {
 }
 
 .secondary-btn {
-  background: #edf4ff;
+  background: var(--secondary-btn-bg);
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -256,8 +288,8 @@ h1 {
 }
 
 .panel {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(223, 233, 247, 0.9);
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 18px 18px 16px;
   box-shadow: var(--shadow);
@@ -330,8 +362,8 @@ h1 {
 }
 
 .main-panel {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(223, 233, 247, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
   border-radius: 22px;
   padding: 18px;
   box-shadow: var(--shadow);
@@ -353,13 +385,13 @@ h1 {
 }
 
 .tab-btn {
-  background: #edf4ff;
+  background: var(--secondary-btn-bg);
   border: 1px solid var(--border);
   color: var(--muted);
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #dfeeff, #e5faf7);
+  background: linear-gradient(135deg, var(--secondary-btn-alt), rgba(23, 168, 156, 0.12));
   color: var(--text);
   border-color: rgba(11, 91, 211, 0.18);
 }
@@ -410,7 +442,7 @@ h1 {
   align-items: center;
   padding: 7px 10px;
   border-radius: 999px;
-  background: #edf4ff;
+  background: var(--secondary-btn-bg);
   color: var(--muted);
   font-size: 0.8rem;
 }
@@ -459,7 +491,7 @@ h1 {
 .trade-row,
 .alert-card,
 .backup-entry {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: 0 12px 22px rgba(15, 23, 42, 0.04);
@@ -471,7 +503,7 @@ h1 {
   border-radius: 10px;
   padding: 9px 12px;
   font-weight: 600;
-  background: #edf4ff;
+  background: var(--secondary-btn-bg);
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -488,7 +520,7 @@ h1 {
   min-width: 0;
   padding: 9px 10px;
   border-radius: 12px;
-  background: white;
+  background: var(--panel);
   border: 1px solid var(--border);
 }
 
