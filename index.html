@@ -11,6 +11,8 @@
     <title>Client Contact CRM</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="client-profile.css" />
+    <link rel="stylesheet" href="daily-tasks.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -56,26 +58,35 @@
 
         </aside>
 
-        <main class="main-panel">
-          <section class="tabs" aria-label="Client views">
-            <button class="tab-btn active" data-view="clientsView">Clients</button>
-            <button class="tab-btn" data-view="callsView">Calls</button>
-          </section>
-
+        <main class="main-panel client-main-panel">
           <section id="clientsView" class="view active">
-            <div id="clientDetailsContainer" class="detail-container hidden"></div>
+            <div class="client-workspace">
+              <div id="clientDetailsContainer" class="client-profile-panel detail-container hidden"></div>
+              <div class="panel daily-task-panel">
+                <div class="panel-subhead">
+                  <h2>Daily calling tasks</h2>
+                  <button class="small-btn" data-open-modal="taskModal" data-add-task-selected="true">+ Add</button>
+                </div>
+                <div id="dailyTasksList" class="detail-list"></div>
+              </div>
+            </div>
           </section>
 
           <section id="callsView" class="view">
             <div class="section-head">
-              <h2>Call log</h2>
-              <span class="section-pill">Outgoing and incoming</span>
+              <div>
+                <h2>Call log</h2>
+                <span class="section-pill">Outgoing and incoming</span>
+              </div>
+              <button class="primary-btn" data-open-modal="callModal" data-add-call-selected="true">+ Add call log</button>
             </div>
             <div id="callsList" class="table-list"></div>
           </section>
         </main>
       </div>
     </div>
+
+    <footer class="app-footer">Made by Ishvanta Digi Services &amp; AnGH</footer>
 
     <div id="clientModal" class="modal hidden" aria-hidden="true">
       <div class="modal-card">
@@ -141,6 +152,71 @@
       </div>
     </div>
 
+    <div id="editClientModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Edit client</h3>
+          <button class="close-btn" data-close-modal="editClientModal">×</button>
+        </div>
+        <form id="editClientForm" class="stack-form">
+          <input type="hidden" id="editClientId" name="id" />
+          <div class="field-row">
+            <label>
+              Full name
+              <input name="name" type="text" required />
+            </label>
+            <label>
+              Company / business
+              <input name="company" type="text" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label>
+              Phone
+              <input name="phone" type="tel" />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" />
+            </label>
+          </div>
+          <label>
+            Address
+            <input name="address" type="text" placeholder="Street, city, state, ZIP" />
+          </label>
+          <div class="field-row">
+            <label>
+              Relationship type
+              <select name="relationType">
+                <option value="Customer">Customer</option>
+                <option value="Partner">Partner</option>
+                <option value="Supplier">Supplier</option>
+                <option value="Referral">Referral</option>
+                <option value="Family">Family</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="Active">Active</option>
+                <option value="Warm">Warm</option>
+                <option value="Cold">Cold</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Notes
+            <textarea name="notes" rows="4" placeholder="Preferred contact time, relationship details, important reminders..."></textarea>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" data-close-modal="editClientModal">Cancel</button>
+            <button type="submit" class="primary-btn">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div id="callModal" class="modal hidden" aria-hidden="true">
       <div class="modal-card">
         <div class="modal-head">
@@ -183,6 +259,35 @@
           <div class="modal-actions">
             <button type="button" class="secondary-btn" data-close-modal="callModal">Cancel</button>
             <button type="submit" class="primary-btn">Save call</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="taskModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Add daily call task</h3>
+          <button class="close-btn" data-close-modal="taskModal">×</button>
+        </div>
+        <form id="taskForm" class="stack-form">
+          <div class="field-row">
+            <label>
+              Client
+              <select name="clientId" id="taskClientSelect"></select>
+            </label>
+            <label>
+              Task date
+              <input name="taskDate" type="date" required />
+            </label>
+          </div>
+          <label>
+            Client code
+            <input name="clientCode" type="text" placeholder="Enter client code" required />
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" data-close-modal="taskModal">Cancel</button>
+            <button type="submit" class="primary-btn">Save task</button>
           </div>
         </form>
       </div>
@@ -232,6 +337,8 @@
       </div>
     </div>
 
+    <script src="client-profile.js"></script>
+    <script src="daily-tasks.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
