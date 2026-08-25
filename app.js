@@ -61,6 +61,7 @@ const defaultState = {
       notes: 'Potential for expanded business relationship.'
     }
   ],
+  tasks: [],
   backups: [
     {
       id: 'b1',
@@ -82,6 +83,7 @@ const elements = {
   callsList: document.querySelector('#callsList'),
   relationsList: document.querySelector('#relationsList'),
   clientDetailsContainer: document.querySelector('#clientDetailsContainer'),
+  dailyTasksList: document.querySelector('#dailyTasksList'),
   backupList: document.querySelector('#backupList'),
   clientsSummary: document.querySelector('#clientsSummary'),
   globalSearch: document.querySelector('#globalSearch'),
@@ -93,12 +95,32 @@ const elements = {
 
 const modals = {
   clientModal: document.querySelector('#clientModal'),
+  editClientModal: document.querySelector('#editClientModal'),
   callModal: document.querySelector('#callModal'),
+  taskModal: document.querySelector('#taskModal'),
   relationModal: document.querySelector('#relationModal')
 };
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function getTodayDateValue() {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
+function resetDailyTasks(tasks) {
+  const today = getTodayDateValue();
+  return tasks.map((task) => {
+    if (task.completedOn !== today) {
+      return { ...task, taskDate: today, completed: false };
+    }
+
+    return task;
+  });
 }
 
 function loadState() {
@@ -113,6 +135,7 @@ function loadState() {
       clients: Array.isArray(parsed.clients) ? parsed.clients : [],
       calls: Array.isArray(parsed.calls) ? parsed.calls : [],
       relations: Array.isArray(parsed.relations) ? parsed.relations : [],
+      tasks: resetDailyTasks(Array.isArray(parsed.tasks) ? parsed.tasks : []),
       backups: Array.isArray(parsed.backups) ? parsed.backups : []
     };
   } catch (error) {
@@ -158,95 +181,13 @@ function renderClientDetail(clientId) {
   const recentCalls = state.calls.filter((call) => call.clientId === client.id).slice(0, 4);
   const clientRelations = state.relations.filter((relation) => relation.clientId === client.id);
 
-  elements.clientDetailsContainer.classList.remove('hidden');
-  elements.clientDetailsContainer.innerHTML = `
-    <div class="detail-panel">
-      <div class="detail-header">
-        <div class="detail-meta">
-          <div class="avatar">${getInitials(client.name)}</div>
-          <div>
-            <p class="eyebrow">Client profile</p>
-            <h3>${client.name}</h3>
-            <div class="tag-list">
-              <span class="tag">${client.relationType}</span>
-              <span class="tag">${client.status}</span>
-            </div>
-          </div>
-        </div>
-        <div class="detail-actions">
-          <button class="small-btn" data-client-close-detail="${client.id}">Close</button>
-          <button class="primary-btn" data-open-modal="callModal" data-call-client="${client.id}">+ Add call</button>
-        </div>
-      </div>
-
-      <div class="detail-grid">
-        <div class="detail-box">
-          <span>Company</span>
-          <strong>${client.company || 'Not provided'}</strong>
-        </div>
-        <div class="detail-box">
-          <span>Phone</span>
-          <strong>${client.phone || 'Not provided'}</strong>
-        </div>
-      </div>
-
-      <div class="detail-body">
-        <div class="detail-section">
-          <h4>Contact details</h4>
-          <div class="detail-list">
-            <div class="list-item"><span>Last call</span><strong>${recentCalls[0]?.callDate || 'No call yet'}</strong></div>
-            <div class="list-item"><span>Notes</span><strong>${client.notes || 'No notes'}</strong></div>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>Relationship</h4>
-          <div class="detail-list">
-            ${clientRelations.length ? clientRelations.map((relation) => `
-              <div class="list-item">
-                <span>${relation.relationType}</span>
-                <strong>${relation.status}</strong>
-              </div>
-            `).join('') : '<div class="list-item"><span>No relation</span><strong>—</strong></div>'}
-          </div>
-        </div>
-      </div>
-
-      <div class="detail-body">
-        <div class="detail-section">
-          <h4>Recent calls</h4>
-          <div class="detail-list">
-            ${recentCalls.length ? recentCalls.map((call) => `
-              <div class="list-item">
-                <span>${call.callDate} · ${call.callType}</span>
-                <strong>${call.outcome}</strong>
-              </div>
-            `).join('') : '<div class="list-item"><span>No calls yet</span><strong>—</strong></div>'}
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>Next follow-up</h4>
-          <div class="detail-list">
-            ${recentCalls.length ? recentCalls.map((call) => `
-              <div class="list-item">
-                <span>${call.callType}</span>
-                <strong>${call.nextFollowUp || 'No follow-up'}</strong>
-              </div>
-            `).join('') : '<div class="list-item"><span>No follow-up</span><strong>—</strong></div>'}
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const closeButton = elements.clientDetailsContainer.querySelector('[data-client-close-detail]');
-  if (closeButton) {
-    closeButton.addEventListener('click', () => {
-      elements.clientDetailsContainer.classList.add('hidden');
-      elements.clientDetailsContainer.innerHTML = '';
-    });
-  }
+  ClientProfile.render({
+    container: elements.clientDetailsContainer,
+    client,
+    recentCalls,
+    clientRelations,
+    getInitials
+  });
 }
 
 function renderClients() {
@@ -288,7 +229,7 @@ function renderClients() {
             <span class="tag">${client.relationType}</span>
           </div>
           <ul class="meta-list">
-            <li>� ${client.phone || 'Phone not listed'}</li>
+            <li>Phone: ${client.phone || 'Phone not listed'}</li>
           </ul>
         </article>
       `
@@ -300,13 +241,26 @@ function renderClients() {
   }
 }
 
+function renderDailyTasks() {
+  DailyTasks.render({
+    container: elements.dailyTasksList,
+    tasks: state.tasks,
+    getClientName,
+    onChange(taskId, completed) {
+      const task = state.tasks.find((item) => item.id === taskId);
+      if (!task) return;
+
+      task.completed = completed;
+      task.completedOn = completed ? getTodayDateValue() : null;
+      saveState();
+      renderDailyTasks();
+    }
+  });
+}
+
 function renderCalls() {
   const query = elements.globalSearch.value.trim().toLowerCase();
-  const sourceCalls = selectedClientId
-    ? state.calls.filter((call) => call.clientId === selectedClientId)
-    : state.calls;
-
-  const filtered = sourceCalls.filter((call) => {
+  const filtered = state.calls.filter((call) => {
     if (!query) return true;
     const haystack = [
       getClientName(call.clientId),
@@ -319,7 +273,7 @@ function renderCalls() {
   });
 
   if (!filtered.length) {
-    elements.callsList.innerHTML = '<div class="empty-state">No call history recorded yet for this client.</div>';
+    elements.callsList.innerHTML = '<div class="empty-state">No call history recorded yet.</div>';
     return;
   }
 
@@ -409,7 +363,8 @@ function renderBackups() {
         exportedAt: backup.exportedAt,
         clients: state.clients,
         calls: state.calls,
-        relations: state.relations
+        relations: state.relations,
+        tasks: state.tasks
       };
 
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -429,12 +384,14 @@ function renderSelectOptions() {
     .join('');
 
   document.querySelector('#callClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
+  document.querySelector('#taskClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
   document.querySelector('#relationClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
 }
 
 function renderAll() {
   updateCounts();
   renderClients();
+  renderDailyTasks();
   renderCalls();
   if (elements.relationsList) renderRelations();
   if (elements.backupList) renderBackups();
@@ -488,6 +445,31 @@ function handleClientSubmit(event) {
   closeModal('clientModal');
 }
 
+function handleEditClientSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+  const clientId = formData.get('id').toString();
+  const client = state.clients.find((c) => c.id === clientId);
+
+  if (!client) return;
+
+  client.name = formData.get('name').toString().trim();
+  client.company = formData.get('company').toString().trim();
+  client.phone = formData.get('phone').toString().trim();
+  client.email = formData.get('email').toString().trim();
+  client.address = formData.get('address').toString().trim();
+  client.relationType = formData.get('relationType').toString();
+  client.status = formData.get('status').toString();
+  client.notes = formData.get('notes').toString().trim();
+
+  saveState();
+  renderAll();
+  renderClientDetail(clientId);
+  form.reset();
+  closeModal('editClientModal');
+}
+
 function handleCallSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -507,6 +489,9 @@ function handleCallSubmit(event) {
   state.calls.push(call);
   saveState();
   renderAll();
+  if (selectedClientId) {
+    renderClientDetail(selectedClientId);
+  }
   form.reset();
   closeModal('callModal');
 }
@@ -548,7 +533,8 @@ function createBackup() {
     exportedAt: backupRecord.exportedAt,
     clients: state.clients,
     calls: state.calls,
-    relations: state.relations
+    relations: state.relations,
+    tasks: state.tasks
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -572,6 +558,7 @@ function restoreBackup(file) {
       state.clients = parsed.clients || [];
       state.calls = parsed.calls || [];
       state.relations = parsed.relations || [];
+      state.tasks = resetDailyTasks(Array.isArray(parsed.tasks) ? parsed.tasks : []);
       state.backups.push({
         id: `b${crypto.randomUUID().slice(0, 8)}`,
         exportedAt: new Date().toISOString(),
@@ -605,12 +592,45 @@ function setupModalControls() {
     button.addEventListener('click', () => {
       const targetModal = button.dataset.openModal;
       const callClientId = button.dataset.callClient;
+      const editClientId = button.dataset.editClient;
+      const taskClientId = button.dataset.taskClient;
 
-      if (targetModal === 'callModal' && callClientId) {
-        const callSelect = document.querySelector('#callClientSelect');
-        if (callSelect) {
-          callSelect.value = callClientId;
+
+
+      if (targetModal === 'editClientModal' && editClientId) {
+        const client = state.clients.find((c) => c.id === editClientId);
+        if (client) {
+          document.querySelector('#editClientId').value = client.id;
+          document.querySelector('#editClientForm input[name="name"]').value = client.name;
+          document.querySelector('#editClientForm input[name="company"]').value = client.company || '';
+          document.querySelector('#editClientForm input[name="phone"]').value = client.phone || '';
+          document.querySelector('#editClientForm input[name="email"]').value = client.email || '';
+          document.querySelector('#editClientForm input[name="address"]').value = client.address || '';
+          document.querySelector('#editClientForm select[name="relationType"]').value = client.relationType;
+          document.querySelector('#editClientForm select[name="status"]').value = client.status;
+          document.querySelector('#editClientForm textarea[name="notes"]').value = client.notes || '';
         }
+      }
+
+      if (targetModal === 'callModal' && (callClientId || button.dataset.addCallSelected)) {
+        const clientIdToSelect = callClientId || selectedClientId;
+        const callSelect = document.querySelector('#callClientSelect');
+        if (callSelect && clientIdToSelect) {
+          callSelect.value = clientIdToSelect;
+        }
+
+        const callDateInput = document.querySelector('#callForm input[name="callDate"]');
+        if (callDateInput) {
+          callDateInput.value = getTodayDateValue();
+        }
+      }
+
+      if (targetModal === 'taskModal' && (taskClientId || button.dataset.addTaskSelected)) {
+        const taskSelect = document.querySelector('#taskClientSelect');
+        if (taskSelect && (taskClientId || selectedClientId)) {
+          taskSelect.value = taskClientId || selectedClientId;
+        }
+        DailyTasks.setTodayDate();
       }
 
       openModal(targetModal);
@@ -650,11 +670,41 @@ function setupEventHandlers() {
   elements.clientsList.addEventListener('click', (event) => {
     const button = event.target.closest('[data-client-detail]');
     if (!button) return;
-    renderClientDetail(button.dataset.clientDetail);
+
+    selectedClientId = button.dataset.clientDetail;
+    renderClients();
+    renderDailyTasks();
+    renderClientDetail(selectedClientId);
+    renderCalls();
+  });
+
+  elements.clientDetailsContainer.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-open-modal]');
+    if (!button) return;
+
+    const targetModal = button.dataset.openModal;
+    if (targetModal === 'taskModal') {
+      const taskSelect = document.querySelector('#taskClientSelect');
+      if (taskSelect) taskSelect.value = button.dataset.taskClient;
+      DailyTasks.setTodayDate();
+    }
+
+    openModal(targetModal);
   });
 
   document.querySelector('#clientForm').addEventListener('submit', handleClientSubmit);
+  document.querySelector('#editClientForm').addEventListener('submit', handleEditClientSubmit);
   document.querySelector('#callForm').addEventListener('submit', handleCallSubmit);
+  document.querySelector('#taskForm').addEventListener('submit', (event) => {
+    DailyTasks.handleSubmit(event, {
+      state,
+      saveState,
+      renderAll,
+      renderClientDetail,
+      closeModal,
+      getTodayDateValue
+    });
+  });
   document.querySelector('#relationForm').addEventListener('submit', handleRelationSubmit);
   elements.globalSearch.addEventListener('input', renderAll);
 

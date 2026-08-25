@@ -1,0 +1,47 @@
+.daily-task-panel {
+  min-width: 0;
+  height: 100%;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.task-item input {
+  width: auto;
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+
+.task-item span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.task-item strong {
+  overflow-wrap: anywhere;
+}
+
+.task-item small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.task-item.completed strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+@media (max-width: 980px) {
+  .daily-task-panel {
+    height: auto;
+  }
+}
