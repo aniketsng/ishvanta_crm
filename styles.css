@@ -191,6 +191,29 @@ h1 {
   border-bottom: 1px solid var(--border);
 }
 
+.storage-info {
+  color: var(--muted);
+  cursor: help;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.modal-note {
+  margin: -4px 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.form-error.hidden {
+  display: none;
+}
+
 .menu-item:last-child {
   border-bottom: none;
 }
@@ -271,6 +294,20 @@ h1 {
   background: var(--secondary-btn-bg);
   color: var(--text);
   border: 1px solid var(--border);
+}
+
+.danger-btn {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  border-radius: 12px;
+  padding: 10px 15px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.danger-btn:hover {
+  background: rgba(220, 38, 38, 0.16);
 }
 
 .layout {

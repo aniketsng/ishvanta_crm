@@ -32,6 +32,7 @@
             <div id="actionMenu" class="action-menu hidden">
               <button type="button" class="menu-item" id="themeToggleBtn">Dark mode</button>
               <button type="button" class="menu-item" id="backupBtn">Backup CRM</button>
+              <div class="menu-item storage-info" id="storageInfo">Saved on this device in browser storage</div>
               <label class="menu-item file-item">
                 Restore backup
                 <input id="restoreInput" type="file" accept="application/json" />
@@ -65,7 +66,10 @@
               <div id="clientDetailsContainer" class="client-profile-panel detail-container hidden"></div>
               <div class="panel daily-task-panel">
                 <div class="panel-subhead">
-                  <h2>Daily calling tasks</h2>
+                  <div class="daily-task-heading">
+                    <h2>Daily calling tasks</h2>
+                    <span id="dailyTasksDate" class="section-pill"></span>
+                  </div>
                   <button class="small-btn" data-open-modal="taskModal" data-add-task-selected="true">+ Add</button>
                 </div>
                 <div id="dailyTasksList" class="detail-list"></div>
@@ -275,11 +279,11 @@
           <div class="field-row">
             <label>
               Client
-              <select name="clientId" id="taskClientSelect"></select>
+              <input name="clientName" type="text" placeholder="Enter client name" required />
             </label>
             <label>
-              Task date
-              <input name="taskDate" type="date" required />
+              Note
+              <input name="note" type="text" placeholder="Add a calling note" />
             </label>
           </div>
           <label>
@@ -333,6 +337,29 @@
           <div class="modal-actions">
             <button type="button" class="secondary-btn" data-close-modal="relationModal">Cancel</button>
             <button type="submit" class="primary-btn">Save relation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="passwordModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="passwordModalTitle">Protect your backups</h3>
+        </div>
+        <p id="passwordModalMessage" class="modal-note">Create a password for backup files downloaded to this device.</p>
+        <form id="passwordForm" class="stack-form">
+          <label>
+            Password
+            <input name="password" type="password" minlength="8" autocomplete="new-password" required />
+          </label>
+          <label id="passwordConfirmField">
+            Confirm password
+            <input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required />
+          </label>
+          <p id="passwordError" class="form-error hidden"></p>
+          <div class="modal-actions">
+            <button type="submit" class="primary-btn" id="passwordSubmitBtn">Set password</button>
           </div>
         </form>
       </div>

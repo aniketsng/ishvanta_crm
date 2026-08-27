@@ -1,5 +1,9 @@
 const STORAGE_KEY = 'client-contact-crm-v1';
 const THEME_STORAGE_KEY = 'client-contact-crm-theme';
+const BACKUP_PASSWORD_KEY = 'client-contact-crm-backup-password-v1';
+const BACKUP_SESSION_KEY = 'client-contact-crm-backup-session-v1';
+const BACKUP_FORMAT = 'client-contact-crm-encrypted-backup-v1';
+const PBKDF2_ITERATIONS = 150000;
 
 const defaultState = {
   clients: [
@@ -100,8 +104,11 @@ const modals = {
   editClientModal: document.querySelector('#editClientModal'),
   callModal: document.querySelector('#callModal'),
   taskModal: document.querySelector('#taskModal'),
-  relationModal: document.querySelector('#relationModal')
+  relationModal: document.querySelector('#relationModal'),
+  passwordModal: document.querySelector('#passwordModal')
 };
+
+let backupPassword = null;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -148,6 +155,105 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+}
+
+async function derivePasswordBytes(password, salt) {
+  const material = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  return new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    material,
+    256
+  ));
+}
+
+async function createPasswordRecord(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const verifier = await derivePasswordBytes(password, salt);
+  return { salt: bytesToBase64(salt), verifier: bytesToBase64(verifier) };
+}
+
+async function passwordMatches(password, record) {
+  const verifier = await derivePasswordBytes(password, base64ToBytes(record.salt));
+  const expected = base64ToBytes(record.verifier);
+  return verifier.length === expected.length && verifier.every((byte, index) => byte === expected[index]);
+}
+
+async function encryptBackup(payload, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const passwordBytes = await derivePasswordBytes(password, salt);
+  const key = await crypto.subtle.importKey('raw', passwordBytes, 'AES-GCM', false, ['encrypt']);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
+  return {
+    format: BACKUP_FORMAT,
+    salt: bytesToBase64(salt),
+    iv: bytesToBase64(iv),
+    data: bytesToBase64(new Uint8Array(encrypted))
+  };
+}
+
+async function decryptBackup(encryptedBackup, password) {
+  if (encryptedBackup?.format !== BACKUP_FORMAT) {
+    throw new Error('Unsupported backup format');
+  }
+
+  const passwordBytes = await derivePasswordBytes(password, base64ToBytes(encryptedBackup.salt));
+  const key = await crypto.subtle.importKey('raw', passwordBytes, 'AES-GCM', false, ['decrypt']);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: base64ToBytes(encryptedBackup.iv) },
+    key,
+    base64ToBytes(encryptedBackup.data)
+  );
+  return JSON.parse(new TextDecoder().decode(decrypted));
+}
+
+function showPasswordModal(mode) {
+  const isSetup = mode === 'setup';
+  document.querySelector('#passwordModalTitle').textContent = isSetup ? 'Protect your backups' : 'Unlock your backups';
+  document.querySelector('#passwordModalMessage').textContent = isSetup
+    ? 'Create a password for backup files downloaded to this device.'
+    : 'Enter your backup password to enable encrypted backup downloads.';
+  document.querySelector('#passwordConfirmField').classList.toggle('hidden', !isSetup);
+  document.querySelector('#passwordForm input[name="confirmPassword"]').disabled = !isSetup;
+  document.querySelector('#passwordForm input[name="password"]').setAttribute('autocomplete', isSetup ? 'new-password' : 'current-password');
+  document.querySelector('#passwordSubmitBtn').textContent = isSetup ? 'Set password' : 'Unlock backups';
+  document.querySelector('#passwordError').classList.add('hidden');
+  document.querySelector('#passwordForm').dataset.mode = mode;
+  openModal('passwordModal');
+}
+
+async function initializeBackupSecurity() {
+  const passwordRecord = localStorage.getItem(BACKUP_PASSWORD_KEY);
+  const sessionPassword = sessionStorage.getItem(BACKUP_SESSION_KEY);
+
+  if (passwordRecord && sessionPassword && await passwordMatches(sessionPassword, JSON.parse(passwordRecord))) {
+    backupPassword = sessionPassword;
+    return;
+  }
+
+  sessionStorage.removeItem(BACKUP_SESSION_KEY);
+  showPasswordModal(passwordRecord ? 'unlock' : 'setup');
 }
 
 function applyTheme(themeName) {
@@ -254,6 +360,13 @@ function renderClients() {
 }
 
 function renderDailyTasks() {
+  const today = getTodayDateValue();
+  const dateParts = today.split('-');
+  const dailyTasksDate = document.querySelector('#dailyTasksDate');
+  if (dailyTasksDate) {
+    dailyTasksDate.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+  }
+
   DailyTasks.render({
     container: elements.dailyTasksList,
     tasks: state.tasks,
@@ -264,6 +377,11 @@ function renderDailyTasks() {
 
       task.completed = completed;
       task.completedOn = completed ? getTodayDateValue() : null;
+      saveState();
+      renderDailyTasks();
+    },
+    onDelete(taskId) {
+      state.tasks = state.tasks.filter((item) => item.id !== taskId);
       saveState();
       renderDailyTasks();
     }
@@ -367,9 +485,9 @@ function renderBackups() {
     .join('');
 
   elements.backupList.querySelectorAll('[data-download]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const backup = state.backups.find((item) => item.id === button.dataset.download);
-      if (!backup) return;
+      if (!backup || !backupPassword) return;
 
       const payload = {
         exportedAt: backup.exportedAt,
@@ -379,7 +497,8 @@ function renderBackups() {
         tasks: state.tasks
       };
 
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const encryptedPayload = await encryptBackup(payload, backupPassword);
+      const blob = new Blob([JSON.stringify(encryptedPayload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -396,7 +515,6 @@ function renderSelectOptions() {
     .join('');
 
   document.querySelector('#callClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
-  document.querySelector('#taskClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
   document.querySelector('#relationClientSelect').innerHTML = clientOptions || '<option value="">No clients available</option>';
 }
 
@@ -482,6 +600,24 @@ function handleEditClientSubmit(event) {
   closeModal('editClientModal');
 }
 
+function handleDeleteClient(clientId) {
+  const client = state.clients.find((item) => item.id === clientId);
+  if (!client) return;
+
+  const confirmed = window.confirm(`Delete ${client.name} and all of their calling data?`);
+  if (!confirmed) return;
+
+  state.clients = state.clients.filter((item) => item.id !== clientId);
+  state.calls = state.calls.filter((call) => call.clientId !== clientId);
+  state.tasks = state.tasks.filter((task) => task.clientId !== clientId);
+  state.relations = state.relations.filter((relation) => relation.clientId !== clientId);
+  selectedClientId = state.clients[0]?.id || null;
+
+  saveState();
+  renderAll();
+  renderClientDetail(selectedClientId);
+}
+
 function handleCallSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -529,7 +665,9 @@ function handleRelationSubmit(event) {
   closeModal('relationModal');
 }
 
-function createBackup() {
+async function createBackup() {
+  if (!backupPassword) return;
+
   const label = `Manual backup ${new Date().toLocaleString()}`;
   const backupRecord = {
     id: `b${crypto.randomUUID().slice(0, 8)}`,
@@ -549,7 +687,8 @@ function createBackup() {
     tasks: state.tasks
   };
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const encryptedPayload = await encryptBackup(payload, backupPassword);
+  const blob = new Blob([JSON.stringify(encryptedPayload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -560,9 +699,13 @@ function createBackup() {
 
 function restoreBackup(file) {
   const reader = new FileReader();
-  reader.onload = function () {
+  reader.onload = async function () {
     try {
-      const parsed = JSON.parse(String(reader.result));
+      const encryptedBackup = JSON.parse(String(reader.result));
+      const password = window.prompt('Enter the backup password to restore this file:');
+      if (!password) return;
+
+      const parsed = await decryptBackup(encryptedBackup, password);
       if (!parsed || !Array.isArray(parsed.clients)) {
         throw new Error('Invalid backup structure');
       }
@@ -582,7 +725,7 @@ function restoreBackup(file) {
       alert('Backup restored successfully.');
     } catch (error) {
       console.error(error);
-      alert('Could not restore the selected file. Please choose a valid client CRM backup export.');
+      alert('Could not restore the selected file. Check the backup password and choose a valid encrypted CRM backup.');
     }
   };
   reader.readAsText(file);
@@ -638,11 +781,10 @@ function setupModalControls() {
       }
 
       if (targetModal === 'taskModal' && (taskClientId || button.dataset.addTaskSelected)) {
-        const taskSelect = document.querySelector('#taskClientSelect');
-        if (taskSelect && (taskClientId || selectedClientId)) {
-          taskSelect.value = taskClientId || selectedClientId;
+        const taskClientInput = document.querySelector('#taskForm input[name="clientName"]');
+        if (taskClientInput) {
+          taskClientInput.value = '';
         }
-        DailyTasks.setTodayDate();
       }
 
       openModal(targetModal);
@@ -702,14 +844,19 @@ function setupEventHandlers() {
   });
 
   elements.clientDetailsContainer.addEventListener('click', (event) => {
+    const deleteButton = event.target.closest('[data-delete-client]');
+    if (deleteButton) {
+      handleDeleteClient(deleteButton.dataset.deleteClient);
+      return;
+    }
+
     const button = event.target.closest('[data-open-modal]');
     if (!button) return;
 
     const targetModal = button.dataset.openModal;
     if (targetModal === 'taskModal') {
-      const taskSelect = document.querySelector('#taskClientSelect');
-      if (taskSelect) taskSelect.value = button.dataset.taskClient;
-      DailyTasks.setTodayDate();
+      const taskClientInput = document.querySelector('#taskForm input[name="clientName"]');
+      if (taskClientInput) taskClientInput.value = '';
     }
 
     openModal(targetModal);
@@ -729,6 +876,40 @@ function setupEventHandlers() {
     });
   });
   document.querySelector('#relationForm').addEventListener('submit', handleRelationSubmit);
+  document.querySelector('#passwordForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const password = new FormData(form).get('password').toString();
+    const error = document.querySelector('#passwordError');
+
+    if (form.dataset.mode === 'setup') {
+      const confirmation = new FormData(form).get('confirmPassword').toString();
+      if (password !== confirmation) {
+        error.textContent = 'Passwords do not match.';
+        error.classList.remove('hidden');
+        return;
+      }
+
+      localStorage.setItem(BACKUP_PASSWORD_KEY, JSON.stringify(await createPasswordRecord(password)));
+      backupPassword = password;
+      sessionStorage.setItem(BACKUP_SESSION_KEY, password);
+      form.reset();
+      closeModal('passwordModal');
+      return;
+    }
+
+    const passwordRecord = JSON.parse(localStorage.getItem(BACKUP_PASSWORD_KEY));
+    if (!(await passwordMatches(password, passwordRecord))) {
+      error.textContent = 'Incorrect backup password.';
+      error.classList.remove('hidden');
+      return;
+    }
+
+    backupPassword = password;
+    sessionStorage.setItem(BACKUP_SESSION_KEY, password);
+    form.reset();
+    closeModal('passwordModal');
+  });
   elements.globalSearch.addEventListener('input', renderAll);
 
   if (elements.backupBtn) {
@@ -752,6 +933,7 @@ function setupEventHandlers() {
 
 renderAll();
 setupEventHandlers();
+initializeBackupSecurity();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
