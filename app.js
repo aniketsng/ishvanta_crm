@@ -2,6 +2,7 @@ const STORAGE_KEY = 'client-contact-crm-v1';
 const THEME_STORAGE_KEY = 'client-contact-crm-theme';
 const BACKUP_PASSWORD_KEY = 'client-contact-crm-backup-password-v1';
 const BACKUP_SESSION_KEY = 'client-contact-crm-backup-session-v1';
+const AUTO_BACKUP_KEY = 'client-contact-crm-auto-backup-v1';
 const BACKUP_FORMAT = 'client-contact-crm-encrypted-backup-v1';
 const PBKDF2_ITERATIONS = 150000;
 
@@ -155,6 +156,28 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  saveAutomaticBackup();
+}
+
+function getBackupPayload(exportedAt = new Date().toISOString()) {
+  return {
+    exportedAt,
+    clients: state.clients,
+    calls: state.calls,
+    relations: state.relations,
+    tasks: state.tasks
+  };
+}
+
+async function saveAutomaticBackup() {
+  if (!backupPassword) return;
+
+  try {
+    const encryptedPayload = await encryptBackup(getBackupPayload(), backupPassword);
+    localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(encryptedPayload));
+  } catch (error) {
+    console.error('Unable to create automatic backup:', error);
+  }
 }
 
 function bytesToBase64(bytes) {
@@ -489,13 +512,7 @@ function renderBackups() {
       const backup = state.backups.find((item) => item.id === button.dataset.download);
       if (!backup || !backupPassword) return;
 
-      const payload = {
-        exportedAt: backup.exportedAt,
-        clients: state.clients,
-        calls: state.calls,
-        relations: state.relations,
-        tasks: state.tasks
-      };
+      const payload = getBackupPayload(backup.exportedAt);
 
       const encryptedPayload = await encryptBackup(payload, backupPassword);
       const blob = new Blob([JSON.stringify(encryptedPayload, null, 2)], { type: 'application/json' });
@@ -679,13 +696,7 @@ async function createBackup() {
   saveState();
   renderAll();
 
-  const payload = {
-    exportedAt: backupRecord.exportedAt,
-    clients: state.clients,
-    calls: state.calls,
-    relations: state.relations,
-    tasks: state.tasks
-  };
+  const payload = getBackupPayload(backupRecord.exportedAt);
 
   const encryptedPayload = await encryptBackup(payload, backupPassword);
   const blob = new Blob([JSON.stringify(encryptedPayload, null, 2)], { type: 'application/json' });
@@ -767,7 +778,7 @@ function setupModalControls() {
         }
       }
 
-      if (targetModal === 'callModal' && (callClientId || button.dataset.addCallSelected)) {
+      if (targetModal === 'callModal') {
         const clientIdToSelect = callClientId || selectedClientId;
         const callSelect = document.querySelector('#callClientSelect');
         if (callSelect && clientIdToSelect) {
@@ -864,6 +875,15 @@ function setupEventHandlers() {
 
   document.querySelector('#clientForm').addEventListener('submit', handleClientSubmit);
   document.querySelector('#editClientForm').addEventListener('submit', handleEditClientSubmit);
+  document.querySelector('#editClientForm').addEventListener('click', (event) => {
+    const deleteButton = event.target.closest('[data-delete-client]');
+    if (!deleteButton) return;
+
+    event.preventDefault();
+    const clientId = document.querySelector('#editClientId').value;
+    closeModal('editClientModal');
+    handleDeleteClient(clientId);
+  });
   document.querySelector('#callForm').addEventListener('submit', handleCallSubmit);
   document.querySelector('#taskForm').addEventListener('submit', (event) => {
     DailyTasks.handleSubmit(event, {
@@ -893,6 +913,7 @@ function setupEventHandlers() {
       localStorage.setItem(BACKUP_PASSWORD_KEY, JSON.stringify(await createPasswordRecord(password)));
       backupPassword = password;
       sessionStorage.setItem(BACKUP_SESSION_KEY, password);
+      await saveAutomaticBackup();
       form.reset();
       closeModal('passwordModal');
       return;
@@ -907,6 +928,7 @@ function setupEventHandlers() {
 
     backupPassword = password;
     sessionStorage.setItem(BACKUP_SESSION_KEY, password);
+    await saveAutomaticBackup();
     form.reset();
     closeModal('passwordModal');
   });

@@ -8,6 +8,7 @@
   --panel-soft: rgba(255, 255, 255, 0.86);
   --panel-glass: rgba(255, 255, 255, 0.72);
   --panel-menu: rgba(255, 255, 255, 0.96);
+  --input-bg: #f8fbff;
   --secondary-btn-bg: #edf4ff;
   --secondary-btn-alt: #dfeeff;
   --primary: #0b5bd3;
@@ -33,6 +34,7 @@
   --panel-soft: rgba(17, 28, 46, 0.86);
   --panel-glass: rgba(15, 23, 42, 0.78);
   --panel-menu: rgba(15, 23, 42, 0.96);
+  --input-bg: #172943;
   --secondary-btn-bg: #16263f;
   --secondary-btn-alt: #1c2d49;
   --primary: #7db4ff;
@@ -267,6 +269,14 @@ h1 {
 .panel-subhead h2 {
   margin: 0;
   font-size: 1.2rem;
+}
+
+.clients-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .primary-btn,
@@ -514,7 +524,7 @@ h1 {
 
 .client-list .client-card.active {
   border-color: rgba(11, 91, 211, 0.45);
-  background: #eef6ff;
+  background: var(--secondary-btn-bg);
   box-shadow: 0 8px 18px rgba(11, 91, 211, 0.08);
 }
 
@@ -766,7 +776,7 @@ h1 {
   border: 1px dashed var(--border);
   border-radius: 16px;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--panel-soft);
 }
 
 .modal {
@@ -785,7 +795,7 @@ h1 {
 
 .modal-card {
   width: min(720px, 100%);
-  background: white;
+  background: var(--panel);
   border-radius: 24px;
   padding: 22px;
   box-shadow: var(--shadow);
@@ -802,7 +812,7 @@ h1 {
 .close-btn {
   width: 34px;
   height: 34px;
-  background: #edf4ff;
+  background: var(--secondary-btn-bg);
   color: var(--text);
   font-size: 1.5rem;
   line-height: 1;
@@ -833,10 +843,21 @@ select {
   width: 100%;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: #f8fbff;
+  background: var(--input-bg);
   color: var(--text);
   padding: 12px 14px;
   outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+option {
+  background: var(--input-bg);
+  color: var(--text);
 }
 
 input:focus,

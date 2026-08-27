@@ -26,13 +26,12 @@
         </div>
 
         <div class="topbar-actions">
-          <button class="primary-btn" data-open-modal="clientModal">+ New Client</button>
           <div class="action-menu-wrap">
-            <button id="actionBtn" class="secondary-btn" type="button">Action</button>
+            <button id="actionBtn" class="secondary-btn" type="button">More</button>
             <div id="actionMenu" class="action-menu hidden">
               <button type="button" class="menu-item" id="themeToggleBtn">Dark mode</button>
               <button type="button" class="menu-item" id="backupBtn">Backup CRM</button>
-              <div class="menu-item storage-info" id="storageInfo">Saved on this device in browser storage</div>
+              <div class="menu-item storage-info" id="storageInfo">Saved on this device with automatic encrypted backup</div>
               <label class="menu-item file-item">
                 Restore backup
                 <input id="restoreInput" type="file" accept="application/json" />
@@ -52,7 +51,9 @@
 
             <div class="panel-subhead">
               <h2>Clients</h2>
-              <span id="clientsSummary" class="section-pill"></span>
+              <div class="clients-panel-actions">
+                <button class="small-btn" data-open-modal="clientModal">+ New Client</button>
+              </div>
             </div>
 
             <div id="clientsList" class="client-list"></div>
@@ -215,6 +216,7 @@
             <textarea name="notes" rows="4" placeholder="Preferred contact time, relationship details, important reminders..."></textarea>
           </label>
           <div class="modal-actions">
+            <button type="button" class="danger-btn" data-delete-client="edit-client">Delete client</button>
             <button type="button" class="secondary-btn" data-close-modal="editClientModal">Cancel</button>
             <button type="submit" class="primary-btn">Save changes</button>
           </div>

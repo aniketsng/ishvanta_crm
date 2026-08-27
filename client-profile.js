@@ -22,9 +22,8 @@ window.ClientProfile = {
             </div>
           </div>
           <div class="detail-actions">
-            <button class="secondary-btn" data-open-modal="editClientModal" data-edit-client="${client.id}">Edit</button>
             <button class="primary-btn" data-open-modal="callModal" data-call-client="${client.id}">+ Add call</button>
-            <button class="danger-btn" type="button" data-delete-client="${client.id}">Delete client</button>
+            <button class="secondary-btn" data-open-modal="editClientModal" data-edit-client="${client.id}">Edit</button>
           </div>
         </div>
 
