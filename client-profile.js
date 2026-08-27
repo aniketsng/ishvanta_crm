@@ -1,8 +1,24 @@
 window.ClientProfile = {
   render({ container, client, recentCalls, clientRelations, getInitials }) {
     if (!client) {
-      container.classList.add('hidden');
-      container.innerHTML = '';
+      container.classList.remove('hidden');
+      container.innerHTML = `
+        <div class="detail-panel profile-skeleton" aria-label="Select a client to view profile">
+          <div class="skeleton-header">
+            <span class="skeleton-avatar"></span>
+            <div class="skeleton-copy">
+              <span class="skeleton-line skeleton-line--short"></span>
+              <span class="skeleton-line"></span>
+              <span class="skeleton-line skeleton-line--tiny"></span>
+            </div>
+          </div>
+          <div class="skeleton-grid">
+            <span class="skeleton-box"></span>
+            <span class="skeleton-box"></span>
+          </div>
+          <span class="skeleton-section"></span>
+        </div>
+      `;
       return;
     }
 
@@ -15,6 +31,7 @@ window.ClientProfile = {
             <div>
               <p class="eyebrow">Client profile</p>
               <h3>${client.name}</h3>
+              ${client.clientCode ? `<span class="client-code">Code: ${client.clientCode}</span>` : ''}
               <div class="tag-list">
                 <span class="tag">${client.relationType}</span>
                 <span class="tag">${client.status}</span>
@@ -60,28 +77,22 @@ window.ClientProfile = {
           </div>
         </div>
 
-        <div class="detail-body">
+        <div class="detail-body detail-body--full">
           <div class="detail-section">
-            <h4>Recent calls</h4>
+            <h4>Call activity</h4>
             <div class="detail-list">
               ${recentCalls.length ? recentCalls.map((call) => `
-                <div class="list-item">
-                  <span>${call.callDate} · ${call.callType}</span>
-                  <strong>${call.outcome}</strong>
+                <div class="call-activity-item">
+                  <div class="call-activity-summary">
+                    <span>${call.callDate} · ${call.callType}</span>
+                    <strong>${call.outcome}</strong>
+                  </div>
+                  <div class="call-activity-follow-up">
+                    <span>Next follow-up</span>
+                    <strong>${call.nextFollowUp || 'Not scheduled'}</strong>
+                  </div>
                 </div>
               `).join('') : '<div class="list-item"><span>No calls yet</span><strong>-</strong></div>'}
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h4>Next follow-up</h4>
-            <div class="detail-list">
-              ${recentCalls.length ? recentCalls.map((call) => `
-                <div class="list-item">
-                  <span>${call.callType}</span>
-                  <strong>${call.nextFollowUp || 'No follow-up'}</strong>
-                </div>
-              `).join('') : '<div class="list-item"><span>No follow-up</span><strong>-</strong></div>'}
             </div>
           </div>
         </div>

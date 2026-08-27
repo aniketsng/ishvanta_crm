@@ -28,6 +28,89 @@
   overflow-wrap: anywhere;
 }
 
+.client-code {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.profile-skeleton {
+  display: grid;
+  gap: 14px;
+  min-height: 310px;
+}
+
+.skeleton-header,
+.skeleton-copy,
+.skeleton-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.skeleton-header {
+  align-items: center;
+}
+
+.skeleton-copy {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.skeleton-avatar,
+.skeleton-line,
+.skeleton-box,
+.skeleton-section {
+  display: block;
+  background: linear-gradient(90deg, var(--panel-alt), var(--secondary-btn-bg), var(--panel-alt));
+  background-size: 200% 100%;
+  animation: profile-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.skeleton-line {
+  width: 55%;
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-line--short {
+  width: 28%;
+  height: 9px;
+}
+
+.skeleton-line--tiny {
+  width: 20%;
+  height: 9px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.skeleton-box {
+  height: 64px;
+  border-radius: 14px;
+}
+
+.skeleton-section {
+  height: 118px;
+  border-radius: 16px;
+}
+
+@keyframes profile-skeleton-shimmer {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -72,6 +155,10 @@
   margin-top: 12px;
 }
 
+.detail-body--full {
+  grid-template-columns: 1fr;
+}
+
 .detail-section {
   min-width: 0;
   padding: 12px;
@@ -106,6 +193,38 @@
   overflow-wrap: anywhere;
 }
 
+.call-activity-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.45fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.call-activity-summary,
+.call-activity-follow-up {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.call-activity-summary strong,
+.call-activity-follow-up strong {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.call-activity-follow-up {
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
 @media (max-width: 1120px) {
   .detail-body {
     grid-template-columns: 1fr;
@@ -136,5 +255,16 @@
   .detail-grid,
   .detail-body {
     grid-template-columns: 1fr;
+  }
+
+  .call-activity-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .call-activity-follow-up {
+    padding: 8px 0 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
   }
 }

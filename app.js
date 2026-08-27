@@ -333,14 +333,30 @@ function renderClientDetail(clientId) {
 
 function renderClients() {
   const query = elements.globalSearch.value.trim().toLowerCase();
+  const layout = document.querySelector('.layout');
+  ClientProfile.render({
+    container: elements.clientDetailsContainer,
+    client: null
+  });
+
+  if (!query) {
+    layout.classList.add('client-results-collapsed');
+    elements.clientsList.classList.add('hidden');
+    elements.clientsList.innerHTML = '';
+    return;
+  }
+
+  layout.classList.remove('client-results-collapsed');
+  elements.clientsList.classList.remove('hidden');
+
   const filtered = state.clients.filter((client) => {
-    if (!query) return true;
     const haystack = [
       client.name,
       client.company,
       client.address,
       client.phone,
       client.email,
+      client.clientCode,
       client.relationType,
       client.notes
     ].join(' ').toLowerCase();
@@ -348,8 +364,6 @@ function renderClients() {
   });
 
   if (!filtered.length) {
-    elements.clientDetailsContainer.classList.add('hidden');
-    elements.clientDetailsContainer.innerHTML = '';
     elements.clientsList.innerHTML = '<div class="empty-state">No client records match your current search.</div>';
     return;
   }
@@ -376,10 +390,6 @@ function renderClients() {
       `
     )
     .join('');
-
-  if (!elements.clientDetailsContainer.innerHTML.trim() || !filtered.some((client) => client.id === selectedClientId)) {
-    renderClientDetail(filtered[0].id);
-  }
 }
 
 function renderDailyTasks() {
@@ -569,6 +579,7 @@ function handleClientSubmit(event) {
     company: formData.get('company').toString().trim(),
     phone: formData.get('phone').toString().trim(),
     email: formData.get('email').toString().trim(),
+    clientCode: formData.get('clientCode').toString().trim(),
     address: formData.get('address').toString().trim(),
     relationType: formData.get('relationType').toString(),
     status: formData.get('status').toString(),
@@ -605,6 +616,7 @@ function handleEditClientSubmit(event) {
   client.company = formData.get('company').toString().trim();
   client.phone = formData.get('phone').toString().trim();
   client.email = formData.get('email').toString().trim();
+  client.clientCode = formData.get('clientCode').toString().trim();
   client.address = formData.get('address').toString().trim();
   client.relationType = formData.get('relationType').toString();
   client.status = formData.get('status').toString();
@@ -771,6 +783,7 @@ function setupModalControls() {
           document.querySelector('#editClientForm input[name="company"]').value = client.company || '';
           document.querySelector('#editClientForm input[name="phone"]').value = client.phone || '';
           document.querySelector('#editClientForm input[name="email"]').value = client.email || '';
+          document.querySelector('#editClientForm input[name="clientCode"]').value = client.clientCode || '';
           document.querySelector('#editClientForm input[name="address"]').value = client.address || '';
           document.querySelector('#editClientForm select[name="relationType"]').value = client.relationType;
           document.querySelector('#editClientForm select[name="status"]').value = client.status;
@@ -849,9 +862,18 @@ function setupEventHandlers() {
 
     selectedClientId = button.dataset.clientDetail;
     renderClients();
+    elements.clientsList.querySelectorAll('[data-client-detail]').forEach((card) => {
+      if (card.dataset.clientDetail !== selectedClientId) {
+        card.classList.add('hidden');
+      }
+    });
     renderDailyTasks();
     renderClientDetail(selectedClientId);
     renderCalls();
+    elements.globalSearch.value = '';
+    elements.clientsList.innerHTML = '';
+    elements.clientsList.classList.add('hidden');
+    document.querySelector('.layout').classList.add('client-results-collapsed');
   });
 
   elements.clientDetailsContainer.addEventListener('click', (event) => {

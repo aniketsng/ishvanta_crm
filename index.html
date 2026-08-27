@@ -44,11 +44,6 @@
       <div class="layout">
         <aside class="sidebar">
           <div class="panel search-panel">
-            <label class="search-box sidebar-search" aria-label="Search clients and calls">
-              <span>⌕</span>
-              <input id="globalSearch" type="search" placeholder="Search client name, address, phone, relation" />
-            </label>
-
             <div class="panel-subhead">
               <h2>Clients</h2>
               <div class="clients-panel-actions">
@@ -56,7 +51,10 @@
               </div>
             </div>
 
-            <div id="clientsList" class="client-list"></div>
+            <label class="search-box sidebar-search" aria-label="Search clients and calls">
+              <span>⌕</span>
+              <input id="globalSearch" type="search" placeholder="Search client name, address, phone, relation" />
+            </label>
           </div>
 
         </aside>
@@ -64,6 +62,7 @@
         <main class="main-panel client-main-panel">
           <section id="clientsView" class="view active">
             <div class="client-workspace">
+              <div id="clientsList" class="client-list"></div>
               <div id="clientDetailsContainer" class="client-profile-panel detail-container hidden"></div>
               <div class="panel daily-task-panel">
                 <div class="panel-subhead">
@@ -121,6 +120,10 @@
               <input name="email" type="email" />
             </label>
           </div>
+          <label>
+            Client code <span class="field-optional">(optional)</span>
+            <input name="clientCode" type="text" placeholder="Enter client code" />
+          </label>
           <label>
             Address
             <input name="address" type="text" placeholder="Street, city, state, ZIP" />
@@ -186,6 +189,10 @@
               <input name="email" type="email" />
             </label>
           </div>
+          <label>
+            Client code <span class="field-optional">(optional)</span>
+            <input name="clientCode" type="text" placeholder="Enter client code" />
+          </label>
           <label>
             Address
             <input name="address" type="text" placeholder="Street, city, state, ZIP" />
